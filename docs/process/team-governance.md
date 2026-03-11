@@ -3,7 +3,7 @@ agent-notes:
   ctx: "team roster, triggers, debate protocol, voice rules"
   deps: [CLAUDE.md, docs/methodology/personas.md, docs/methodology/phases.md]
   state: active
-  last: "coordinator@2026-02-15"
+  last: "coordinator@2026-03-12"
 ---
 # Team Governance
 
@@ -103,6 +103,7 @@ During sprint planning (Step 7 of `/sprint-boundary` or `/plan`), the coordinato
 1. **Scan each sprint item** for architectural decision indicators.
 2. **Tag items** that require the gate: note "Requires Architecture Gate" in the sprint plan.
 3. **Schedule Architecture phase** before Implementation for tagged items — these items cannot enter the TDD pipeline until the gate passes.
+4. **Scan for dual-duty enablers.** Ask: "Does any backlog item — even one scheduled for a later sprint — enable better testing, diagnostics, or verification for features we've already built or are building this sprint?" If yes, Pat evaluates for pull-forward. Common enablers: preview/viewer features (visual test oracles), export capabilities (golden-file testing), debug panels (diagnostic tools), logging enhancements (observability). See the Diagnostic Blindness anti-pattern in `docs/process/gotchas.md`.
 
 #### Debate Tracking Format
 

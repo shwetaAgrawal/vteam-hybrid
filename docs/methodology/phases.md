@@ -1,5 +1,5 @@
 ---
-agent-notes: { ctx: "phase-dependent team compositions for hybrid methodology", deps: [docs/methodology/personas.md, CLAUDE.md], state: canonical, last: "archie@2026-02-21" }
+agent-notes: { ctx: "phase-dependent team compositions for hybrid methodology", deps: [docs/methodology/personas.md, CLAUDE.md], state: canonical, last: "coordinator@2026-03-12" }
 ---
 
 # Hybrid Team Methodology
@@ -155,6 +155,8 @@ The coordinator's job is to recognize phase transitions and assemble the right t
 | Optional | **Debra** | Data/ML-related root causes |
 
 **How it works:** Shared "blackboard" — a debugging document where agents post hypotheses, observations, and evidence. Tara writes a failing test that reproduces the bug. Sato investigates and fixes. Vik contributes pattern-based intuition. Any agent can contribute if they spot something.
+
+**Backlog scan:** Before designing new diagnostic tooling, Tara and Sato check the backlog for features that could help diagnose or reproduce the bug. A planned "preview" feature, "debug panel," "export" capability, or "logging enhancement" may already solve the diagnostic need. If found, flag it to Pat for dual-duty pull-forward consideration.
 
 **Transition to next phase:** When the bug is fixed and the regression test passes.
 

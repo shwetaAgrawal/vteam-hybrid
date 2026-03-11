@@ -3,7 +3,7 @@ agent-notes:
   ctx: "implementation gotchas and established patterns"
   deps: [CLAUDE.md]
   state: active
-  last: "coordinator@2026-03-01"
+  last: "coordinator@2026-03-12"
 ---
 # Known Patterns and Gotchas
 
@@ -81,6 +81,8 @@ Extracted from CLAUDE.md to reduce context window load. Read this when working o
 - **Agents own their gotchas sections.** The agent-attributed sections at the top of this file (Testing Patterns → Tara, Code Review Findings → Vik, etc.) are written by the named agent at the end of their work, as part of the done gate or handoff. Record project-specific operational knowledge that would save time in a future session — not general programming knowledge, not things already in ADRs or `code-map.md`. Keep entries specific: "mock the gateway at HTTP level, not SDK level, because the SDK swallows retry errors" beats "be careful with mocking." If an entry becomes broadly relevant beyond its section, promote it to an ADR, `code-map.md`, or the template itself.
 
 - **Sprint boundary must end with a clean-tree gate.** Multi-step workflows (sprint boundary, kickoff) involve many file operations — archival moves, artifact creation, code reviews. Commits that run partway through the workflow leave late-written files unstaged. The `/sprint-boundary` Step 8 enforces a terminal `git status --porcelain` check and stages any orphaned changes. If you're writing a similar multi-step workflow, end it with the same pattern: check, stage, commit, re-check.
+
+- **Diagnostic Blindness anti-pattern.** When a testing or debugging gap is identified, the team designs solutions from scratch (install LibreOffice for visual testing, build a custom comparator, add a new dependency) without checking whether a planned backlog item already solves the problem. A "preview" feature planned for sprint 8 is exactly the visual test oracle you need in sprint 3 — but because Tara thinks about test infrastructure and Pat thinks about feature priority in separate loops, neither connects the dots. **Detection signal:** Tara proposes heavyweight test infrastructure for visual/output verification while a rendering, preview, or export feature sits in the backlog. Sato designs a debugging approach that duplicates a planned observability feature. **Fix:** (1) Tara scans the backlog during test design for features that could serve as test oracles or diagnostic tools — see Tara's "Backlog-Aware Test Design" section. (2) Pat applies "dual-duty prioritization" — items that serve both user-facing and internal purposes get a priority boost and are candidates for pull-forward. (3) During sprint planning, the coordinator asks: "Does any backlog item enable better testing or diagnostics for what we've already built?" See `docs/process/team-governance.md` § Sprint Planning Integration.
 
 - **Horizontal Blindness anti-pattern.** Cross-cutting concerns (logging, error UX, config, debug support, README accuracy) fall between vertical work items. No single item owns them, so they degrade silently. **Detection signal:** 3+ sprints in with no logging or debug flags, README quick-start is broken, error messages are inconsistent across modules. **Fix:** run the operational baseline audit (`docs/process/operational-baseline.md`). Done Gate #14 catches per-item regressions; sprint boundary Step 5b catches product-level drift.
 

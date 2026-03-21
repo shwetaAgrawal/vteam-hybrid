@@ -43,13 +43,21 @@ No scaffold fits? Skip this — the template works with any tech stack.
 
 ### 4. Run discovery
 
+**Fast path (~5 min):**
+```
+/quickstart I want to build <your project description>
+```
+Cam asks 3 questions, creates a backlog, and starts your first TDD cycle immediately. Best for getting started quickly — you can add the full methodology later.
+
+**Full path (~30-60 min):**
 ```
 /kickoff I want to build <your project description>
 ```
+Five interactive phases: vision elicitation, product philosophy, design exploration, architecture with adversarial debate, and project board setup.
 
-This is interactive — expect 15-30 minutes across 5 phases. Cam asks about your vision, Pat captures your product philosophy, Dani explores design concepts, Archie proposes architecture (and Wei challenges it), and Grace sets up your project board.
+**Validate (quickstart):** CLAUDE.md has your project name, `docs/plans/quickstart-backlog.md` exists, and your first test is written.
 
-**Validate:** You should have `docs/product-context.md`, at least one ADR in `docs/adrs/`, and issues on your GitHub Projects board.
+**Validate (kickoff):** You should have `docs/product-context.md`, at least one ADR in `docs/adrs/`, and issues on your GitHub Projects board.
 
 ### 5. Start building
 
@@ -141,7 +149,8 @@ flowchart TD
 
 | Command | Description |
 |---------|-------------|
-| `/kickoff` | Full discovery workflow with board setup |
+| `/quickstart` | Fast 5-min onboarding: 3 questions, backlog, first TDD cycle |
+| `/kickoff` | Full discovery workflow with board setup (30-60 min) |
 | `/plan` | Create an implementation plan for a feature |
 | `/tdd` | TDD workflow: Tara writes failing tests, Sato implements |
 | `/code-review` | Three-lens code review (simplicity, tests, security) |

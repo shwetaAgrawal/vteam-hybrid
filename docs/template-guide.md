@@ -213,7 +213,8 @@ All commands are invoked as `/<name>` in Claude Code (e.g., `/kickoff`, `/tdd`).
 
 | Command | Description |
 |---------|-------------|
-| `kickoff` | Full discovery workflow with board setup |
+| `quickstart` | Fast 5-min onboarding: 3 questions, backlog, first TDD cycle |
+| `kickoff` | Full discovery workflow with board setup (30-60 min) |
 | `plan` | Create an implementation plan for a feature |
 | `tdd` | TDD workflow: Tara writes failing tests, Sato implements |
 | `code-review` | Three-lens code review (simplicity, tests, security) |

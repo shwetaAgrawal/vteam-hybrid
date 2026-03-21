@@ -10,10 +10,10 @@
    - `/scaffold-web-monorepo` — TypeScript monorepo (Next.js, React)
    - `/scaffold-ai-tool` — Python AI/ML tool
    - `/scaffold-static-site` — Static site (GitHub Pages)
-3. **Run discovery** — `/kickoff` to define your product and set up tracking
+3. **Run discovery** — `/quickstart` (5 min, gets you coding fast) or `/kickoff` (30-60 min, full discovery with board setup)
 4. **Start building** — `/tdd <feature>` for test-driven development
 
-You don't need to understand the full system to start — just scaffold and `/kickoff`.
+You don't need to understand the full system to start — just run `/quickstart`.
 
 **When you're ready to learn more:** [Template Guide](docs/template-guide.md)
 

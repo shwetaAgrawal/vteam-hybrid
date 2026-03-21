@@ -22,6 +22,7 @@ Extracted from CLAUDE.md to reduce context window load. Referenced by CLAUDE.md 
 | Config manifest | Ines | `docs/config-manifest.md` | New env vars, feature flags, config files |
 | Changelog | Diego | `CHANGELOG.md` | Releases |
 | Code map | Coordinator | `docs/code-map.md` | New packages, modules, or significant API changes |
+| Team directives | All agents | `docs/team-directives.md` | New conventions established during work |
 | ADRs | Archie | `docs/adrs/` | Significant architectural decisions |
 | Product context | Pat | `docs/product-context.md` | Kickoff Phase 1b, sprint boundaries, human corrections |
 

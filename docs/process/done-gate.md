@@ -23,6 +23,7 @@ Every work item must pass this gate before closing:
 10. **Migration safe** — if schema/data changes are involved, Archie's migration safety checklist passes.
 11. **API compatible** — if API contracts changed, backward compatibility verified or new version created.
 12. **Tech debt logged** — if shortcuts were taken, they're recorded in `docs/tech-debt.md`.
+12b. **Directives updated** — if a new convention was established or discovered during this work, add it to `docs/team-directives.md`.
 13. **SBOM current** — if dependencies were added/removed/upgraded, Pierrot has updated the SBOM.
 14. **Operational baseline checked** — if this work item changes application behavior (not docs-only, not CI-only), verify it hasn't degraded the operational baseline (`docs/process/operational-baseline.md`):
     - Logging: new code paths log at appropriate levels.

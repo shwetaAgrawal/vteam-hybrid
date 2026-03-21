@@ -5,9 +5,14 @@ You are setting up this repository as a CLI tool. Follow these steps:
 
 ## 0. Template Setup
 
-Move project scaffolds into place and clean up template-only files:
+Swap the storefront README for the project placeholder, move scaffolds into place, and clean up template-only files:
 
 ```bash
+# Swap README: replace storefront with project placeholder
+if [ -f README-template.md ]; then
+  mv README-template.md README.md
+fi
+
 # Move stub docs from scaffolds/ to docs/ root
 mv docs/scaffolds/*.md docs/ 2>/dev/null
 rmdir docs/scaffolds 2>/dev/null
@@ -17,6 +22,8 @@ rm -rf docs/adrs/template/
 
 # Remove template research/comparison docs
 rm -f docs/research/how-we-compare-*.md docs/research/agent-teams-comparison.md
+rm -f docs/research/squad-vs-vteam-*.md docs/research/ux-gap-analysis-*.md
+rm -f docs/research/what-*-can-learn-from-*.md docs/research/what-we-learn-from-*.md
 ```
 
 ## 1. Gather Requirements

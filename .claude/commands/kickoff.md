@@ -5,6 +5,29 @@ This is a phased process. Complete each phase and get explicit human confirmatio
 
 ---
 
+## Phase 0: Template Cleanup
+
+If this project was just created from the template, swap the storefront README for the project placeholder and clean up template-only files:
+
+```bash
+# Swap README: replace storefront with project placeholder
+if [ -f README-template.md ]; then
+  mv README-template.md README.md
+fi
+
+# Remove template-specific ADRs (not relevant to inheriting projects)
+rm -rf docs/adrs/template/ 2>/dev/null
+
+# Remove template research/comparison docs
+rm -f docs/research/how-we-compare-*.md docs/research/agent-teams-comparison.md 2>/dev/null
+rm -f docs/research/squad-vs-vteam-*.md docs/research/ux-gap-analysis-*.md 2>/dev/null
+rm -f docs/research/what-*-can-learn-from-*.md docs/research/what-we-learn-from-*.md 2>/dev/null
+```
+
+If `README-template.md` doesn't exist, this project has already been initialized — skip this phase.
+
+---
+
 ## Phase 1: Vision Elicitation (Coach Cam)
 
 Slow down. Do NOT jump to solutions. Your job is to make the human's vision legible — often to themselves for the first time.

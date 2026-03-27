@@ -3,13 +3,17 @@ agent-notes:
   ctx: "implementation gotchas and established patterns"
   deps: [CLAUDE.md]
   state: active
-  last: "coordinator@2026-03-18"
+  last: "coordinator@2026-03-28"
 ---
 # Known Patterns and Gotchas
 
 Extracted from CLAUDE.md to reduce context window load. Read this when working on implementation or debugging tasks. Projects populate sections as they discover gotchas.
 
 ## Testing Patterns (Tara)
+
+- **Assert content, not just existence.** A check like "a Bold run exists" can false-positive if an unrelated element happens to match. Always assert the **text content** inside the matched element, not just its presence or formatting. **Detection signal:** test asserts `toBeTruthy()` or `toHaveLength(1)` on a query result without checking what's inside. **Fix:** add content assertions alongside structural assertions — e.g., assert both "element is bold" and "element text is 'Expected Value'."
+
+- **Test real-world combinations, not just individual features.** Synthetic test data that exercises features in isolation (bold text, then a table, then a link) misses bugs that only appear in realistic combinations (bold links inside table cells, strikethrough in nested lists). **Detection signal:** all tests pass on synthetic data but break on real user input. **Fix:** add at least one test that processes a representative real-world sample alongside feature-specific unit tests.
 
 <!-- Tara: add project-specific testing gotchas here as you discover them.
      Examples: mocking strategies that work/fail, flaky test patterns,
@@ -28,6 +32,8 @@ Extracted from CLAUDE.md to reduce context window load. Read this when working o
 
 ## Implementation Patterns (Sato)
 
+- **Sweep all case variants when renaming.** `replace_all` for `marketId` misses `MarketId`, `market_id`, `MARKET_ID`, and names like `validateMarketId`. After any rename, run a case-insensitive grep as a final sweep: `grep -riE 'oldname|old_name'` across the repo. Check function names, type names, variable names, and comments.
+
 <!-- Sato: add codebase-specific implementation patterns, performance learnings,
      and quirks here. Examples: which abstractions work well, fragile areas,
      API client behaviors that differ from their types. -->
@@ -45,6 +51,10 @@ Extracted from CLAUDE.md to reduce context window load. Read this when working o
 - **execa v9 `stdin: 'pipe'` default hangs subprocesses.** execa v9 changed `stdin` from `'inherit'` to `'pipe'`. CLI tools that check stdin connectivity (e.g., `claude -p`, `gemini`) see a connected pipe and wait for EOF, which never comes — the subprocess hangs until timeout. **Detection signal:** subprocess calls work with `--version` or `--help` (which exit immediately) but hang with actual workload flags. **Fix:** always set `stdin: 'ignore'` unless you explicitly need to write to the subprocess's stdin. Audit all execa/child_process calls to explicitly configure all three stdio channels.
 
 - **Health checks that don't exercise the real code path.** A health check like `tool --version` exits immediately without reading stdin, so it succeeds even when the actual call (`tool -p "prompt"`) would hang. **Detection signal:** health check passes but actual tool invocation fails/hangs. **Fix:** health checks should exercise the same flags and stdio configuration as the real invocation, just with minimal input.
+
+- **LLMs wrap JSON in markdown fences.** Even with "respond with valid JSON only" in the prompt, models frequently wrap responses in ` ```json ... ``` ` fences. Parsing the raw response as JSON fails. **Detection signal:** `JSON.parse()` / `json.loads()` throws on LLM output that looks correct when printed. **Fix:** always strip markdown fences from LLM output before parsing. Use a utility like `extractJson()` that handles fenced and unfenced responses.
+
+- **Strip `CLAUDECODE` env var when spawning claude subprocesses.** Claude Code CLI sets `CLAUDECODE=1` in the environment. Spawned `claude --print` processes check for this variable and refuse to run (to prevent recursive spawning). **Detection signal:** subprocess exits immediately with an error about nested invocation. **Fix:** strip the variable before spawning: `delete env.CLAUDECODE` (JS) or `env.pop('CLAUDECODE', None)` (Python).
 
 ## Build and Run
 
@@ -97,3 +107,15 @@ Extracted from CLAUDE.md to reduce context window load. Read this when working o
 - **Horizontal Blindness anti-pattern.** Cross-cutting concerns (logging, error UX, config, debug support, README accuracy) fall between vertical work items. No single item owns them, so they degrade silently. **Detection signal:** 3+ sprints in with no logging or debug flags, README quick-start is broken, error messages are inconsistent across modules. **Fix:** run the operational baseline audit (`docs/process/operational-baseline.md`). Done Gate #14 catches per-item regressions; sprint boundary Step 5b catches product-level drift.
 
 - **Green-Bar-Red-Product anti-pattern.** Every Done Gate passes individually, but the product isn't shippable — no observability, broken quick-start, inconsistent errors. The per-item gate verifies each item in isolation; it cannot see product-level properties that emerge from the combination. **Detection signal:** all items pass Done Gate, but a new user can't get the product working from the README, or production failures produce no useful diagnostics. **Fix:** Done Gate #14 provides per-item defense; sprint boundary Step 5b provides product-level defense. Both reference `docs/process/operational-baseline.md`.
+
+- **Code-reviewer subagent sometimes fails to persist output.** The code-reviewer subagent occasionally completes its analysis but fails to write the review document to disk. After invoking code-reviewer, always verify the expected output file exists in `docs/code-reviews/`. If missing, write the file manually from the subagent's output. **Detection signal:** code-reviewer agent returns "done" but `docs/code-reviews/` has no new file. **Fix:** add a post-invocation check: `ls docs/code-reviews/` and verify recency.
+
+- **Cross-check board status against GitHub issues at sprint boundary.** During sprint boundary board compliance audit, compare `gh issue list --state closed` against board items still in non-Done statuses. Closed issues that remain at "In Progress" or "In Review" on the board are stale state — fix them before proceeding. This was a recurring finding across 5+ projects where issues were auto-closed by commit messages but board status was never updated.
+
+- **Sprint plan must not contradict accepted ADRs.** If a sprint plan specifies product behavior that differs from an accepted ADR (e.g., plan says "on by default" but ADR says "off by default"), the ADR must be formally amended first. A sprint plan note is insufficient to override an ADR. **Detection signal:** sprint plan contradicts an ADR and no amendment PR exists. **Fix:** amend the ADR through the normal gate (Archie + Wei debate) before proceeding with the contradictory plan.
+
+- **All sprint items must be on the board at planning time.** Pat must add every sprint item — committed and stretch — to the project board with "Ready" status during sprint planning. Items not on the board at the start of the sprint create friction when Grace tries to track status transitions, and they often skip "In Progress" and "In Review" entirely. **Detection signal:** sprint execution starts but `gh project item-list` shows fewer items than the sprint plan. **Fix:** Pat adds all items during planning; Grace verifies board count matches plan count before execution begins.
+
+- **Spike work gets an abbreviated Done Gate.** For spike/research work (disposable code, no production users), apply a shortened gate: tests pass, results documented, relevant ADR updated, board moved to Done. The full 15-item checklist applies only to production code. **However:** if spike code is later reused (even partially) in production, the full gate must run on the reused portions. **Detection signal:** production code imports or copies from a spike directory. **Fix:** run full Done Gate on the reused code before merging.
+
+- **Architecture docs describe contracts, not aspirations.** If an architecture doc says "the theme schema has a `pptx:` section," that must be true in code. Treat architecture claims as testable assertions. When you implement and discover you can't honor a stated constraint, update the doc to reflect reality — mark the section as "deferred" or "not yet implemented," don't leave it describing a future that doesn't exist. **Detection signal:** architecture doc describes capability that isn't in the codebase. **Fix:** doc reflects what IS, with clear markers for what's PLANNED.

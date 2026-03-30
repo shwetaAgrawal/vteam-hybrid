@@ -48,13 +48,15 @@ Extracted from CLAUDE.md to reduce context window load. Read this when working o
 
 ## Adapter / Integration Gotchas
 
-- **execa v9 `stdin: 'pipe'` default hangs subprocesses.** execa v9 changed `stdin` from `'inherit'` to `'pipe'`. CLI tools that check stdin connectivity (e.g., `claude -p`, `gemini`) see a connected pipe and wait for EOF, which never comes — the subprocess hangs until timeout. **Detection signal:** subprocess calls work with `--version` or `--help` (which exit immediately) but hang with actual workload flags. **Fix:** always set `stdin: 'ignore'` unless you explicitly need to write to the subprocess's stdin. Audit all execa/child_process calls to explicitly configure all three stdio channels.
+- **execa v9 `stdin: 'pipe'` default hangs subprocesses.** execa v9 changed `stdin` from `'inherit'` to `'pipe'`. CLI tools that check stdin connectivity (e.g., `claude -p`, `gemini`) see a connected pipe and wait for EOF, which never comes — the subprocess hangs until timeout. **Detection signal:** subprocess calls work with `--version` or `--help` (which exit immediately) but hang with actual workload flags. **Fix:** always set `stdin: 'ignore'` unless you explicitly need to write to the subprocess's stdin. Audit all execa/child_process calls to explicitly configure all three stdio channels. ⚠️ *Volatile — verified 2026-03-30, CLI 2.1.87. See `docs/research/claude-cli-invocation-patterns.md` Pattern 1.*
 
 - **Health checks that don't exercise the real code path.** A health check like `tool --version` exits immediately without reading stdin, so it succeeds even when the actual call (`tool -p "prompt"`) would hang. **Detection signal:** health check passes but actual tool invocation fails/hangs. **Fix:** health checks should exercise the same flags and stdio configuration as the real invocation, just with minimal input.
 
-- **LLMs wrap JSON in markdown fences.** Even with "respond with valid JSON only" in the prompt, models frequently wrap responses in ` ```json ... ``` ` fences. Parsing the raw response as JSON fails. **Detection signal:** `JSON.parse()` / `json.loads()` throws on LLM output that looks correct when printed. **Fix:** always strip markdown fences from LLM output before parsing. Use a utility like `extractJson()` that handles fenced and unfenced responses.
+- **LLMs wrap JSON in markdown fences.** Even with "respond with valid JSON only" in the prompt, models frequently wrap responses in ` ```json ... ``` ` fences. Parsing the raw response as JSON fails. **Detection signal:** `JSON.parse()` / `json.loads()` throws on LLM output that looks correct when printed. **Fix:** always strip markdown fences from LLM output before parsing. Use a utility like `extractJson()` that handles fenced and unfenced responses. ⚠️ *Volatile — verified 2026-03-30. See `docs/research/claude-cli-invocation-patterns.md` Pattern 3 for a robust extraction function.*
 
-- **Strip `CLAUDECODE` env var when spawning claude subprocesses.** Claude Code CLI sets `CLAUDECODE=1` in the environment. Spawned `claude --print` processes check for this variable and refuse to run (to prevent recursive spawning). **Detection signal:** subprocess exits immediately with an error about nested invocation. **Fix:** strip the variable before spawning: `delete env.CLAUDECODE` (JS) or `env.pop('CLAUDECODE', None)` (Python).
+- **Strip `CLAUDECODE` env var when spawning claude subprocesses.** Claude Code CLI sets `CLAUDECODE=1` in the environment. Spawned `claude --print` processes check for this variable and refuse to run (to prevent recursive spawning). **Detection signal:** subprocess exits immediately with an error about nested invocation. **Fix:** strip the variable before spawning: `delete env.CLAUDECODE` (JS) or `env.pop('CLAUDECODE', None)` (Python). Also strip `ANTHROPIC_API_KEY` if you want the subprocess to use subscription auth instead of per-token billing. ⚠️ *Volatile — verified 2026-03-30, CLI 2.1.87. See `docs/research/claude-cli-invocation-patterns.md` Pattern 5.*
+
+- **Claude CLI invocation has 8 known patterns — read the research doc first.** Two projects independently discovered the same set of patterns for spawning `claude --print` as a subprocess: prompt via `-p` flag (not stdin), no `--bare`/`--output-format json`, extract JSON from plain text, explicit `--model`, env var stripping, input validation, stderr sanitization, and settle guard for timeouts. If your project spawns `claude` as a subprocess, read `docs/research/claude-cli-invocation-patterns.md` before writing any adapter code. ⚠️ *Volatile — verified 2026-03-30, CLI 2.1.87. The Claude CLI is actively evolving; verify each pattern against `claude --help` and current release notes before adopting. Update the research doc's "Reviewed" date after verification.*
 
 ## Build and Run
 
@@ -119,3 +121,18 @@ Extracted from CLAUDE.md to reduce context window load. Read this when working o
 - **Spike work gets an abbreviated Done Gate.** For spike/research work (disposable code, no production users), apply a shortened gate: tests pass, results documented, relevant ADR updated, board moved to Done. The full 15-item checklist applies only to production code. **However:** if spike code is later reused (even partially) in production, the full gate must run on the reused portions. **Detection signal:** production code imports or copies from a spike directory. **Fix:** run full Done Gate on the reused code before merging.
 
 - **Architecture docs describe contracts, not aspirations.** If an architecture doc says "the theme schema has a `pptx:` section," that must be true in code. Treat architecture claims as testable assertions. When you implement and discover you can't honor a stated constraint, update the doc to reflect reality — mark the section as "deferred" or "not yet implemented," don't leave it describing a future that doesn't exist. **Detection signal:** architecture doc describes capability that isn't in the codebase. **Fix:** doc reflects what IS, with clear markers for what's PLANNED.
+
+## Volatile Knowledge
+
+Some gotcha entries describe behavior of *external tools* (CLIs, SDKs, cloud APIs) rather than our own code. These entries are marked with ⚠️ *Volatile* and include a "verified" date and version.
+
+**Convention:**
+- Entries marked `⚠️ Volatile` are known to be time-sensitive. They were correct when verified but may have changed since.
+- Before adopting a volatile pattern in a new project, re-verify it against the current tool version.
+- After verification, update the "verified" date in the gotcha entry and the corresponding research doc.
+- If a volatile pattern has changed, update both the gotcha and the research doc, then check downstream projects listed in the research doc for drift.
+
+**Why not just delete stale entries?** Because "this used to be true and may have changed" is more useful than silence. A developer who hits a CLI hang and finds a volatile gotcha saying "stdin used to cause this" has a strong lead. A developer who finds nothing has to debug from scratch.
+
+**Current volatile entries:**
+- Claude CLI invocation patterns → `docs/research/claude-cli-invocation-patterns.md`

@@ -1,6 +1,10 @@
+---
+agent-notes: { ctx: "template overview for Claude and Codex", deps: [CLAUDE.md, AGENTS.md, scripts/sync-codex-skills.sh, scripts/codex-skills-env.sh], state: canonical, last: "diego@2026-04-05" }
+---
+
 # vteam-hybrid
 
-**A virtual development team for Claude Code.** One template. A team of specialists that enforces TDD, challenges architecture decisions, and gets smarter the more you use it.
+**A virtual development team for Claude Code and Codex.** One template. A team of specialists that enforces TDD, challenges architecture decisions, and gets smarter the more you use it.
 
 > Claude Code is powerful, but on a real project it drifts. You ask it to implement a feature and it skips tests. You ask for architecture advice and it writes code instead. Reviews are inconsistent. Context evaporates between sessions.
 >
@@ -27,6 +31,33 @@ git commit -m "chore: initialize from vteam-hybrid template"
 ```bash
 claude
 ```
+
+### 2a. Or open in Codex
+
+```bash
+codex
+```
+
+Codex uses `AGENTS.md` directly. For workflow skills, this template treats `.claude/` as the source of truth and generates repo-local `.codex/` assets from it.
+
+```bash
+scripts/sync-codex-skills.sh
+eval "$(scripts/codex-skills-env.sh activate)"
+```
+
+That does three things:
+
+- Rebuilds `.codex/skills/` from `.claude/commands/`
+- Mirrors `.claude/agents/` into `.codex/agents/`
+- Temporarily overlays the repo's generated skills into your Codex skills directory
+
+When you're done with the repo-local overlay:
+
+```bash
+deactivate_codex_skills
+```
+
+**Validate:** `ls .codex/skills/` should show generated `vteam-*` skills such as `vteam-plan` and `vteam-tdd`.
 
 ### 3. Scaffold your stack (optional)
 
@@ -179,17 +210,65 @@ flowchart TD
 
 ---
 
+## Using With Codex
+
+The Codex workflow is intentionally single-source:
+
+- Edit `.claude/commands/` and `.claude/agents/`
+- Regenerate `.codex/` from those files
+- Activate the repo-local Codex skill overlay when working in this repo
+
+### Why this design
+
+Codex and Claude organize reusable behavior differently. To avoid maintaining the same workflow in two places, this template keeps the authored versions in `.claude/` and generates Codex-friendly wrappers into `.codex/`.
+
+### Recommended loop
+
+```bash
+# after changing .claude commands or agents
+scripts/sync-codex-skills.sh
+
+# when starting work in this repo
+eval "$(scripts/codex-skills-env.sh activate)"
+
+# when leaving the repo-local overlay
+deactivate_codex_skills
+```
+
+### Files involved
+
+```text
+.claude/commands/              # source of truth for workflows
+.claude/agents/                # source of truth for persona briefs
+.codex/skills/                 # generated Codex skill adapters
+.codex/agents/                 # generated links to persona briefs
+scripts/sync-codex-skills.sh   # rebuild .codex from .claude
+scripts/codex-skills-env.sh    # activate/deactivate repo-local Codex overlay
+```
+
+### Notes
+
+- `.codex/` is generated. Prefer editing `.claude/` unless you are changing the export mechanism itself.
+- `scripts/codex-skills-env.sh` restores conflicting installed skills on deactivation, similar to a lightweight virtualenv.
+- If you only want a one-way install instead of an overlay, use `scripts/load-codex-skills.sh`.
+
+---
+
 ## What Gets Created
 
 ```
 .
 ├── CLAUDE.md                 # Runtime instructions for Claude Code
+├── AGENTS.md                 # Runtime instructions for Codex
 ├── docs/
 │   ├── methodology/          # System docs (phases, personas, agent-notes)
 │   ├── process/              # Governance, done gate, gotchas
 │   ├── integrations/         # Tracking adapters (GitHub Projects, Jira)
 │   ├── adrs/                 # Architecture Decision Records
 │   └── template-guide.md     # Deep-dive reference and customization guide
+├── .codex/
+│   ├── skills/               # Generated Codex skill adapters from .claude/commands
+│   └── agents/               # Generated links to .claude/agents
 ├── .claude/
 │   ├── agents/               # 19 agent definitions (18 personas + 1 composite)
 │   └── commands/             # 27 workflow commands
